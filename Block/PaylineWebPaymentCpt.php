@@ -1,10 +1,10 @@
 <?php
+
 namespace Monext\HyvaPayline\Block;
 
 use Magento\Customer\Model\Session;
 use Magento\Framework\View\Element\Template;
 use Monext\Payline\Model\Method\WebPayment\GeneralConfigProvider;
-use Payplug\Payments\Model\Payment\Standard\ConfigProvider as Config;
 
 class PaylineWebPaymentCpt extends Template
 {

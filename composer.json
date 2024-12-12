@@ -1,0 +1,28 @@
+{
+    "name": "monext/module-hyva-payline",
+    "description": "Hyva compatibility module for Payline Magento 2",
+    "require": {
+        "monext/module-payline": "*"
+    },
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "support": {
+        "email": "support@payline.com",
+        "docs": "https://docs.payline.com/"
+    },
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Monext\\HyvaPayline\\": ""
+        }
+    },
+    "keywords": [ "Payline",
+        "Monext",
+        "Magento 2",
+        "Payment",
+        "Wallet",
+        "Widget"
+    ]
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="checkout.payment.methods">
+            <block name="checkout.payment.method.payline_web_payment_cpt"
+                   class="Monext\HyvaPayline\Block\PaylineWebPaymentCpt"
+                   as="payline_web_payment_cpt"
+                   template="Monext_HyvaPayline::component/payment/method/payline_web_payment_cpt.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        Monext\HyvaPayline\Magewire\Checkout\Payment\Method\PaylineWebPaymentCpt
+                    </argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>

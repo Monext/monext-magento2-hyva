@@ -10,23 +10,59 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magewirephp\Magewire\Component;
 use Magento\Checkout\Model\Session as SessionCheckout;
+use Monext\Payline\Helper\Constants;
 use Monext\Payline\Helper\Data as DataHelper;
 
 class PaylineWebPaymentCpt extends Component implements EvaluationInterface
 {
-    public string $method = '';
+    /**
+     * @var string
+     */
+    public $method = '';
 
-    public bool $acceptTos = true;
+    /**
+     * @var array
+     */
+    public $methods = [];
 
-    public array $methods = [];
+    /**
+     * @var CartRepositoryInterface
+     */
+    private  $quoteRepository;
 
+    /**
+     * @var SessionCheckout
+     */
+    private  $sessionCheckout;
+
+    /**
+     * @var DataHelper
+     */
+    private  $dataHelper;
+
+
+    /**
+     * @param CartRepositoryInterface $quoteRepository
+     * @param SessionCheckout $sessionCheckout
+     * @param DataHelper $dataHelper
+     */
     public function __construct(
-        private readonly CartRepositoryInterface $quoteRepository,
-        private readonly SessionCheckout $sessionCheckout,
-        private readonly DataHelper $dataHelper,
+        CartRepositoryInterface $quoteRepository,
+        SessionCheckout $sessionCheckout,
+        DataHelper $dataHelper,
     ) {
+        $this->quoteRepository = $quoteRepository;
+        $this->sessionCheckout = $sessionCheckout;
+        $this->dataHelper = $dataHelper;
     }
 
+    /**
+     * Magewire call beforeHydate
+     *
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function mount()
     {
         $payment = $this->sessionCheckout->getQuote()->getPayment();
@@ -47,18 +83,22 @@ class PaylineWebPaymentCpt extends Component implements EvaluationInterface
         $this->quoteRepository->save($quote);
     }
 
+    /**
+     * Magewire dehydate (evaluateComponent)
+     *
+     * @param EvaluationResultFactory $resultFactory
+     * @return EvaluationResultInterface
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function evaluateCompletion(EvaluationResultFactory $resultFactory): EvaluationResultInterface
     {
-        if ($this->sessionCheckout->getQuote()->getPayment()->getMethod() != 'payline_web_payment_cpt') {
+        if ($this->sessionCheckout->getQuote()->getPayment()->getMethod() != Constants::WEB_PAYMENT_CPT) {
             return $resultFactory->createSuccess();
         }
 
         if (empty($this->method)) {
             return $resultFactory->createBlocking(__('Payment method not selected'));
-        }
-
-        if (!$this->acceptTos) {
-            return $resultFactory->createBlocking(__('TOS not accepted'));
         }
 
         $quote = $this->sessionCheckout->getQuote();

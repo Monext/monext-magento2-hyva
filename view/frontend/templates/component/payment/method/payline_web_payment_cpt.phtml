@@ -7,22 +7,10 @@ $config = $block->getConfig();
 $contracts = $config['payline']['general']['contracts'];
 ?>
 <div class="payment-method payline-payment-block">
-<!--    <div class="payment-method-title field choice">-->
-<!--        <input type="radio"-->
-<!--               name="payment[method]"-->
-<!--               class="radio"-->
-<!--               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>-->
-<!--        <label data-bind="attr: {'for': getCode()}" class="label"><span data-bind="text: getTitle()"></span></label>-->
-<!--    </div>-->
     <div class="payment-method-content">
-        <!-- ko foreach: getRegion('messages') -->
-        <!-- ko template: getTemplate() --><!-- /ko -->
-        <!--/ko-->
-
         <div>
             <span><?= $escaper->escapeHtml(__('You will be redirected on payline payment gateway after place order.')) ?></span>
         </div>
-
         <table id="payline-contracts" style="margin-bottom: 20px; border: none;">
             <tbody>
             <?php foreach ($contracts as $contract): ?>
@@ -42,59 +30,16 @@ $contracts = $config['payline']['general']['contracts'];
             <?php endforeach; ?>
             </tbody>
         </table>
-
-<!--        <div class="payment-method-billing-address">-->
-            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
-            <!-- ko template: getTemplate() --><!-- /ko -->
-            <!--/ko-->
-<!--        </div>-->
-<!--        <div class="checkout-agreements-block">-->
-            <!-- ko foreach: $parent.getRegion('before-place-order') -->
-            <!-- ko template: getTemplate() --><!-- /ko -->
-            <!--/ko-->
-<!--        </div>-->
-<!---->
-<!--        <div class="actions-toolbar">-->
-<!--            <div class="primary">-->
-<!--                <button class="action primary checkout"-->
-<!--                        type="submit"-->
-<!--                        data-bind="-->
-<!--                        click: placeOrder,-->
-<!--                        attr: {title: $t('Place Order')},-->
-<!--                        css: {disabled: !isPlaceOrderActionAllowed()},-->
-<!--                        enable: (getCode() == isChecked())-->
-<!--                        "-->
-<!--                        disabled>-->
-<!--                    <span data-bind="i18n: 'Place Order'"></span>-->
-<!--                </button>-->
-<!--            </div>-->
-<!--        </div>-->
     </div>
 </div>
 
 <script>
     'use strict';
-
     (function () {
         document.getElementById('payline-contracts').addEventListener('change', async function () {
-            var selected = document.querySelector('input[name="payment[payline_contract]"]:checked');
+            let selected = document.querySelector('input[name="payment[payline_contract]"]:checked');
             if(selected !== null) {
                 await Magewire.find('checkout.payment.method.payline_web_payment_cpt').call('setAditionalData', selected.value);
-            }
-        });
-
-        window.addEventListener('checkout:payment:method-activate', async event => {
-            if (event.detail.method === "payline_web_payment_cpt") {
-                // var selected = document.querySelector('input[name="payment[payline_contract]"]:checked');
-                // if(selected !== null) {
-                //     await Magewire.find('checkout.payment.method.payline_web_payment_cpt').call('setAditionalData', selected.value);
-                // }
-                // hyvaCheckout.payment.activate('payplug_payments_standard', {
-                //     async validate() {
-                //         var selected = document.querySelector('input[name="payment[payline_contract]"]:checked');
-                //         await Magewire.find('checkout.payment.method.payline_web_payment_cpt').call('setAditionalData', selected.value);
-                //     }
-                // }, document.getElementById('payplug-payment-form'), 'payment');
             }
         });
     })();

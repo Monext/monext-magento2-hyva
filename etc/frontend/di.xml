@@ -5,7 +5,7 @@
         <arguments>
             <argument name="placeOrderServiceList" xsi:type="array">
                 <item name="payline_web_payment_cpt" xsi:type="object">
-                    Monext\HyvaPayline\Magewire\Payment\DeferPlaceOrderServiceProvider
+                    Monext\HyvaPayline\Magewire\Payment\PlaceOrderServiceProvider
                 </item>
             </argument>
         </arguments>

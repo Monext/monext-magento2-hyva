@@ -6,9 +6,21 @@
     },
     "type": "magento2-module",
     "version": "1.0.0",
+    "require": {
+        "hyva-themes/magento2-hyva-checkout": "^1.1",
+        "monext/module-payline": ">=1.2.20"
+    },
+    "authors" : [
+        {
+            "name" : "Olivier Laborde",
+            "email" : "olivier.laborde@tbdgroup.com",
+            "homepage" : "https://www.tbdgroup.com/",
+            "role": "Developer"
+        }
+    ],
     "support": {
         "email": "support@payline.com",
-        "docs": "https://docs.payline.com/"
+        "docs": "https://docs.monext.fr/display/DT"
     },
     "autoload": {
         "files": [

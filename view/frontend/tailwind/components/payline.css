@@ -1,0 +1,15 @@
+.payline-contracts {
+    @apply pl-5;
+
+    img {
+        @apply inline;
+    }
+
+    li {
+        @apply mb-4;
+    }
+
+    .card-last4 {
+        @apply align-top;
+    }
+}

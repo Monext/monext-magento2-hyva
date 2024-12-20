@@ -10,20 +10,41 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magewirephp\Magewire\Component;
-use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
+use Monext\Payline\Helper\Constants;
 use Monext\Payline\Helper\Data as DataHelper;
 use Monext\Payline\Model\PaymentManagement;
+use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
+
 
 class PaylineWebPayment extends Component implements EvaluationInterface
 {
-    public string $method = '';
-    public array $methods = [];
+    /**
+     * @var string
+     */
+    public $method = '';
 
-    private CartRepositoryInterface $quoteRepository;
-    private SessionCheckout $sessionCheckout;
-    private DataHelper $dataHelper;
+    /**
+     * @var array
+     */
+    public $methods = [];
+
+    /**
+     * @var CartRepositoryInterface
+     */
+    private  $quoteRepository;
+
+    /**
+     * @var SessionCheckout
+     */
+    private  $sessionCheckout;
+
+    /**
+     * @var DataHelper
+     */
+    private  $dataHelper;
+
     private PaymentManagement $paymentManagement;
-    private HyvaHelper $hyvaHelper;
+
 
     /**
      * @param CartRepositoryInterface $quoteRepository

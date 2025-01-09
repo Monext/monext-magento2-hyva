@@ -1,0 +1,16 @@
+<?php
+/** @var \Monext\HyvaPayline\Magewire\PaylineWebPayment $magewire */
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var \Monext\HyvaPayline\Block\PaylineWebPaymentNx $block */
+?>
+<div class="payment-method payline-payment-block">
+    <div class="payment-method-content">
+        <div>
+            <img alt="Payline" src="<?= $block->getPaylineLogoUrl();?>"/>
+            <br/>
+            <span><?= __($block->getRedirectMessage()) ?></span>
+            <br/>
+            <br/>
+        </div>
+    </div>
+</div>

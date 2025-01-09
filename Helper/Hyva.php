@@ -4,11 +4,26 @@ namespace Monext\HyvaPayline\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
+use Monext\Payline\Helper\Constants as HelperConstants;
 
 class Hyva extends AbstractHelper
 {
+    /**
+     * @return array
+     */
+    public function getHandledPaymentMethods(): array
+    {
+        return [
+            HelperConstants::WEB_PAYMENT_CPT,
+            HelperConstants::WEB_PAYMENT_NX,
+            HelperConstants::WEB_PAYMENT_REC,
+        ];
+    }
 
-    public function isCompatible()
+    /**
+     * @return bool
+     */
+    public function isCompatible(): bool
     {
         if($this->isReactCheckoutEnabled()) {
             return false;
@@ -21,13 +36,13 @@ class Hyva extends AbstractHelper
         return true;
     }
 
-
-    public function isEnabled()
+    /**
+     * @return bool
+     */
+    public function isEnabled(): bool
     {
         return ($this->isCheckoutEnabled() && $this->_moduleManager->isEnabled('Monext_HyvaPayline'));
     }
-
-
 
     /**
      * Do not expose Payline will module not fully compatible
@@ -43,17 +58,15 @@ class Hyva extends AbstractHelper
                 ) !== 'magento_luma';
     }
 
-
     /**
      * @return bool
      */
     protected function isReactCheckoutEnabled(): bool
     {
-        return $this->_moduleManager->isEnabled('Hyva_ReactCheckout')  && $this->scopeConfig->isSetFlag(
+        return $this->_moduleManager->isEnabled('Hyva_ReactCheckout') &&
+            $this->scopeConfig->isSetFlag(
                 'hyva_react_checkout/general/enable',
                 ScopeInterface::SCOPE_STORE
             );
     }
-
-
 }

@@ -5,11 +5,30 @@
         <referenceBlock name="checkout.payment.methods">
             <block name="checkout.payment.method.payline_web_payment_cpt"
                    class="Monext\HyvaPayline\Block\PaylineWebPaymentCpt"
-                   as="payline_web_payment_cpt"
-                   template="Monext_HyvaPayline::component/payment/method/payline_web_payment_cpt.phtml">
+                   as="payline_web_payment_cpt">
                 <arguments>
                     <argument name="magewire" xsi:type="object">
-                        Monext\HyvaPayline\Magewire\Checkout\Payment\Method\PaylineWebPaymentCpt
+                        Monext\HyvaPayline\Magewire\PaylineWebPayment
+                    </argument>
+                </arguments>
+            </block>
+            <block name="checkout.payment.method.payline_web_payment_rec"
+                   class="Monext\HyvaPayline\Block\PaylineWebPaymentRec"
+                   as="payline_web_payment_rec"
+                   template="Monext_HyvaPayline::component/payment/method/payline_web_payment_rec.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        Monext\HyvaPayline\Magewire\PaylineWebPayment
+                    </argument>
+                </arguments>
+            </block>
+            <block name="checkout.payment.method.payline_web_payment_nx"
+                   class="Monext\HyvaPayline\Block\PaylineWebPaymentNx"
+                   as="payline_web_payment_nx"
+                   template="Monext_HyvaPayline::component/payment/method/payline_web_payment_nx.phtml">
+                <arguments>
+                    <argument name="magewire" xsi:type="object">
+                        Monext\HyvaPayline\Magewire\PaylineWebPayment
                     </argument>
                 </arguments>
             </block>

@@ -1,59 +1,49 @@
 <?php
 
-namespace Monext\HyvaPayline\Magewire\Checkout\Payment\Method;
+namespace Monext\HyvaPayline\Magewire;
 
 use Hyva\Checkout\Model\Magewire\Component\EvaluationInterface;
 use Hyva\Checkout\Model\Magewire\Component\EvaluationResultFactory;
 use Hyva\Checkout\Model\Magewire\Component\EvaluationResultInterface;
+use Magento\Checkout\Model\Session as SessionCheckout;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magewirephp\Magewire\Component;
-use Magento\Checkout\Model\Session as SessionCheckout;
-use Monext\Payline\Helper\Constants;
+use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
 use Monext\Payline\Helper\Data as DataHelper;
+use Monext\Payline\Model\PaymentManagement;
 
-class PaylineWebPaymentCpt extends Component implements EvaluationInterface
+class PaylineWebPayment extends Component implements EvaluationInterface
 {
-    /**
-     * @var string
-     */
-    public $method = '';
+    public string $method = '';
+    public array $methods = [];
 
-    /**
-     * @var array
-     */
-    public $methods = [];
-
-    /**
-     * @var CartRepositoryInterface
-     */
-    private  $quoteRepository;
-
-    /**
-     * @var SessionCheckout
-     */
-    private  $sessionCheckout;
-
-    /**
-     * @var DataHelper
-     */
-    private  $dataHelper;
-
+    private CartRepositoryInterface $quoteRepository;
+    private SessionCheckout $sessionCheckout;
+    private DataHelper $dataHelper;
+    private PaymentManagement $paymentManagement;
+    private HyvaHelper $hyvaHelper;
 
     /**
      * @param CartRepositoryInterface $quoteRepository
      * @param SessionCheckout $sessionCheckout
      * @param DataHelper $dataHelper
+     * @param PaymentManagement $paymentManagement
+     * @param HyvaHelper $hyvaHelper
      */
     public function __construct(
         CartRepositoryInterface $quoteRepository,
         SessionCheckout $sessionCheckout,
         DataHelper $dataHelper,
+        PaymentManagement $paymentManagement,
+        HyvaHelper $hyvaHelper,
     ) {
         $this->quoteRepository = $quoteRepository;
         $this->sessionCheckout = $sessionCheckout;
         $this->dataHelper = $dataHelper;
+        $this->paymentManagement = $paymentManagement;
+        $this->hyvaHelper = $hyvaHelper;
     }
 
     /**
@@ -76,7 +66,7 @@ class PaylineWebPaymentCpt extends Component implements EvaluationInterface
      * @throws LocalizedException
      * @throws NoSuchEntityException
      */
-    public function setAditionalData($contractNumber)
+    public function setAdditionalData(string $contractNumber): void
     {
         $quote = $this->sessionCheckout->getQuote();
         $quote->getPayment()->setAdditionalInformation('contract_number', $contractNumber);
@@ -93,7 +83,8 @@ class PaylineWebPaymentCpt extends Component implements EvaluationInterface
      */
     public function evaluateCompletion(EvaluationResultFactory $resultFactory): EvaluationResultInterface
     {
-        if ($this->sessionCheckout->getQuote()->getPayment()->getMethod() != Constants::WEB_PAYMENT_CPT) {
+        $paymentMethod = $this->sessionCheckout->getQuote()->getPayment()->getMethod();
+        if (!in_array($paymentMethod, $this->hyvaHelper->getHandledPaymentMethods())) {
             return $resultFactory->createSuccess();
         }
 
@@ -106,5 +97,16 @@ class PaylineWebPaymentCpt extends Component implements EvaluationInterface
         $this->quoteRepository->save($quote);
 
         return $resultFactory->createSuccess();
+    }
+
+    public function getToken()
+    {
+        $quote = $this->sessionCheckout->getQuote();
+        if($this->method && $quote->getPayment()->getAdditionalInformation('payment_mode') == $this->method) {
+            $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
+            return $result['token'];
+        }
+        return '';
+
     }
 }

@@ -1,28 +1,22 @@
 <?php
 
 
-namespace Monext\HyvaPayline\Magewire\Payment;
+namespace Monext\HyvaPayline\Model\Magewire\Payment;
 
 use Hyva\Checkout\Model\Magewire\Component\EvaluationResultFactory;
 use Hyva\Checkout\Model\Magewire\Component\EvaluationResultInterface;
 use Hyva\Checkout\Model\Magewire\Payment\AbstractPlaceOrderService;
-use Magento\Framework\App\Action\Context;
+use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 
 class PlaceOrderServiceProvider extends AbstractPlaceOrderService
 {
-
-    /**
-     * @var OrderRepositoryInterface
-     */
-    protected $orderRepository;
-
-    /**
-     * @var \Magento\Framework\Controller\ResultFactory
-     */
-    protected $resultFactory;
+    protected OrderRepositoryInterface $orderRepository;
+    protected ResultFactory $resultFactory;
 
     /**
      * @var null
@@ -37,11 +31,10 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
     /**
      * @param CartManagementInterface $cartManagement
      * @param OrderRepositoryInterface $orderRepository
-     * @param Context $context
      */
     public function __construct(
         CartManagementInterface  $cartManagement,
-        OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterface $orderRepository,
     ) {
         parent::__construct($cartManagement);
         $this->orderRepository = $orderRepository;
@@ -65,24 +58,35 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
         return parent::REDIRECT_PATH;
     }
 
+    /**
+     * @return bool
+     */
     public function canRedirect(): bool
     {
         if($this->orderId && $order = $this->getOrder($this->orderId))  {
-                $result = $order->getPayment()->getAdditionalInformation('do_web_payment_response_data');
+            $result = $order->getPayment()->getAdditionalInformation('do_web_payment_response_data');
         }
 
         return !empty($result['redirect_url']);
     }
 
+    /**
+     * @param Quote $quote
+     * @return int
+     * @throws CouldNotSaveException
+     */
     public function placeOrder(Quote $quote): int
     {
         return parent::placeOrder($quote);
     }
 
-
+    /**
+     * @param EvaluationResultFactory $resultFactory
+     * @param int|null $orderId
+     * @return EvaluationResultInterface
+     */
     public function evaluateCompletion(EvaluationResultFactory $resultFactory, ?int $orderId = null): EvaluationResultInterface
     {
-
         $this->orderId = $orderId;
 
         // Just let the abstraction layer dispatch a success result.
@@ -90,8 +94,12 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
     }
 
 
-    protected function getOrder(?int $orderId = null) {
-
+    /**
+     * @param int|null $orderId
+     * @return OrderInterface|null
+     */
+    protected function getOrder(?int $orderId = null): ?OrderInterface
+    {
         if(is_null($this->order) && $orderId) {
             $this->orderId = $orderId;
             $this->order = $this->orderRepository->get($orderId);

@@ -10,173 +10,46 @@
     <script>
         'use strict';
         (function () {
-
-            let WidgetApi = {
-                widgetContext : {
-
-                },
-
-                setContext: function(config) {
-                    this.widgetContext['environment'] = config.hasOwnProperty('environment') ? config['environment'] : 'HOMO';
-                    this.widgetContext['widgetDisplay'] = config.hasOwnProperty('widgetDisplay') ? config['widgetDisplay'] : 'tab';
-                    this.widgetContext['containerId'] = config.hasOwnProperty('containerId') ? config['containerId'] : 'payline-widget-container';
-                    this.widgetContext['dataEmbeddedredirectionallowed'] = config.hasOwnProperty('dataEmbeddedredirectionallowed') ? config['dataEmbeddedredirectionallowed'] : 'true';
-                },
-
-                getContext: function (key) {
-                    if(!key || !this.widgetContext.hasOwnProperty(key)) {
-                        throw new Error('Cannot get key for context');
-                    }
-
-                    return this.widgetContext[key];
-                },
-
-
-                destroyJs: function () {
-                    $('#payline-widget-api-js').remove();
-                },
-
-                finalStateReached: function(state) {
-                    console.log(state)
-                },
-
-
-                showWidget: function (context, dataToken) {
-                    this.setContext(context);
-
-                    let widgetDivAttributes = [];
-                    widgetDivAttributes['data-token'] = dataToken;
-                    widgetDivAttributes['data-template'] = this.getContext('widgetDisplay');
-                    widgetDivAttributes['data-embeddedredirectionallowed'] =  this.getContext('dataEmbeddedredirectionallowed');
-
-
-                    let callbacks = [
-                        // 'event-willinit',
-                        // 'event-willshow',
-                        'event-finalstatehasbeenreached',
-                        'event-didshowstate',
-                        // 'event-willdisplaymessage',
-                        // 'event-willremovemessage',
-                        // 'event-beforepayment',
-                    ];
-
-                    // $.each(callbacks, function(i, item) {
-                    //     widgetDivAttributes.push('data-' + item + '="' +jQuery.camelCase(item) + '"');
-                    // });
-
-                    for (const [key, value] of Object.entries(callbacks)) {
-                        //widgetDivAttributes.push('data-' + item + '="' +jQuery.camelCase(item) + '"');
-                    }
-
-
-
-                    let paylineWidget = document.createElement("div");
-                    paylineWidget.setAttribute('id', 'PaylineWidget');
-                    for (const [key, value] of Object.entries(widgetDivAttributes)) {
-                        console.log(key, value);
-                        paylineWidget.setAttribute(key, value);
-                    }
-
-                    //let paylineWidgetHtml = `<div id="PaylineWidget" ${widgetDivAttributes.join(' ')} />`;
-
-
-                    let widgetContainer = document.getElementById('payline-widget-container');
-                    widgetContainer.append(paylineWidget);
-
-
-
-                    Payline.Api.init();
-                    
-
-                    // if (!window.isPaylineWidgetCssApiLoaded) {
-                    //     this.initCss();
-                    //     window.isPaylineWidgetCssApiLoaded = true;
-                    // }
-                    //
-                    // this.initJs();
-                },
-
-                destroyWidget: function (widgetContainerId) {
-                    // this.destroyJs();
-                    // $('#'+widgetContainerId).html('');
-                }
-
-            };
-
-
-
-            // document.querySelector('#PaylineWidget div.pl-pmContainer.pl-active button.pl-pay-btn ').click();
-            // document.querySelectorAll('#PaylineWidget div.pl-pmContainer div.pl-pay-btn-container').forEach((buttonCtn)=> buttonCtn.style.display='none');
-
-
             window.addEventListener('checkout:payment:method-activate', async event => {
-
                 if (event.detail.method === "payline_web_payment_cpt") {
-                    console.log(event.detail.method, 'checkout:payment:method-activate');
                     hyvaCheckout.payment.activate('payline_web_payment_cpt', {
                         initialize() {
                             this.loadHostedLib().then(() => {
                                 if (!this.checkLoaded()) {
-                                    let token = '<?= $escaper->escapeJs($magewire->getToken()); ?>';
-                                    let context = {};
+                                    const token = '<?= $escaper->escapeJs($magewire->getToken()); ?>';
+                                    const context = {};
                                     WidgetApi.showWidget(context, token);
                                 }
-
+                            }).catch(() => {
+                                // TODO : traiter erreur si loadHostedLib échoue
+                                alert("Error while loading payment widget");
                             });
-                        },
-                        getDomain() {
-                            //let domain = (this.getContext('environment') === 'PROD') ? 'payment.payline.com' : 'homologation-payment.payline.com';
-                            //TODO
-                            let domain = 'homologation-payment.payline.com';
-                            return 'https://' + domain;
                         },
                         loadHostedLib() {
                             return new Promise((resolve, reject) => {
-
-                                let paylineJs = document.getElementById('payline-widget-api-js');
-                                if (paylineJs) {
-                                    paylineJs.remove();
-                                }
-
-                                // @see view/base/web/js/widget-api.js
-                                const script = document.createElement('script');
-                                script.setAttribute('src', this.getDomain() + '/scripts/widget-min.js');
-                                script.setAttribute('id', 'payline-widget-api-js');
-                                document.head.append(script);
-
-                                if (!document.getElementById('payline-widget-api-css')) {
-                                    const linkCss = document.createElement('link');
-                                    linkCss.setAttribute('href', this.getDomain() + '/styles/widget-min.css');
-                                    linkCss.setAttribute('id', 'payline-widget-api-css');
-                                    linkCss.setAttribute('rel', 'stylesheet');
-                                    linkCss.setAttribute('type', 'text/css');
-                                    document.head.append(linkCss);
-                                }
-
-                                //if it's not loaded yet let's wait 100ms to load it
-                                let count = 0;
-                                const interval = setInterval(() => {
-                                    count++;
-                                    if (typeof Payline !== 'undefined') {
-                                        console.log('Payline defined');
-
-                                        clearInterval(interval);
+                                //--> Check if script is already in head
+                                const widgetScriptHead = document.getElementById("widget-api-vanilla");
+                                if (widgetScriptHead) {
+                                    resolve();
+                                } else {
+                                    const script = document.createElement('script');
+                                    script.src = '<?= $this->getViewFileUrl('Monext_Payline/js/widget-api-vanilla.js')?>';
+                                    script.setAttribute('id', 'widget-api-vanilla');
+                                    script.type = 'text/javascript';
+                                    script.onload = () => {
                                         resolve();
-                                        return;
                                     }
-                                    if (count > 100) {
+                                    script.onerror = () => {
                                         reject();
-                                        clearInterval(interval);
-                                        throw new Error('Unable to load Payline');
                                     }
-                                }, 150);
+                                    document.head.append(script);
+                                }
                             });
                         },
                         checkLoaded: function () {
                             return document.body.contains(document.getElementById('PaylineWidget'));
                         },
                     });
-
                 }
             });
         })();

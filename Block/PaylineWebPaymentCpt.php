@@ -45,5 +45,4 @@ class PaylineWebPaymentCpt extends PaylineWebPaymentAbstract
     {
         return $this->generalConfigProvider->getConfig()['payline']['general']['contracts'];
     }
-
 }

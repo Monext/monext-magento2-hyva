@@ -11,13 +11,13 @@
     <br/>
     <ul id="payline-contracts-redirect">
         <?php foreach ($block->getContracts() as $contract): ?>
-          <li>
+          <li class="flex items-center my-2 p-4 bg-gray-100 rounded-lg has-[:checked]:bg-gray-200">
             <input type="radio"
                    name="payment[payline_payments_standard][contract_id]"
                    class="radio"
                    id="payline_payments_standard_contract_id_<?= $escaper->escapeHtmlAttr($contract['id']); ?>"
                    value="<?= $contract['number'] ?>"/>
-            <label for="payline_payments_standard_contract_id_<?= $escaper->escapeHtmlAttr($contract['id']); ?>">
+            <label for="payline_payments_standard_contract_id_<?= $escaper->escapeHtmlAttr($contract['id']); ?>" class="flex items-center justify-between px-4 w-full">
               <span><?= $escaper->escapeHtml($contract['label']); ?></span>
               <img src="<?= $escaper->escapeHtmlAttr($contract['logo']); ?>" alt="<?= $escaper->escapeHtmlAttr($contract['label']); ?>"/>
             </label>

@@ -4,4 +4,7 @@
         <plugin name="monext-payline-hyva-compatibility"
                 type="Monext\HyvaPayline\Plugin\Model\PaymentMethod"/>
     </type>
+    <type name="Monext\Payline\PaylineApi\Client">
+        <plugin name="monext-payline-hyva-client" type="Monext\HyvaPayline\Plugin\PaylineApi\ClientPlugin"/>
+    </type>
 </config>

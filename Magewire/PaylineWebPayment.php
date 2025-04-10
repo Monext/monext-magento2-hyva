@@ -13,8 +13,6 @@ use Magewirephp\Magewire\Component;
 use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
 use Monext\Payline\Helper\Data as DataHelper;
 use Monext\Payline\Model\PaymentManagement;
-use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
-
 
 class PaylineWebPayment extends Component implements EvaluationInterface
 {
@@ -105,8 +103,13 @@ class PaylineWebPayment extends Component implements EvaluationInterface
     {
         $quote = $this->sessionCheckout->getQuote();
         if($this->method && $quote->getPayment()->getAdditionalInformation('payment_mode') == $this->method) {
-            $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
-            return $result['token'];
+            try {
+                $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
+                return $result['token'];
+            } catch (\Exception $e) {
+
+            }
+
         }
         return '';
 

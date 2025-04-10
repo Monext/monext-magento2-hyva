@@ -15,7 +15,7 @@
             <block name="checkout.payment.method.payline_web_payment_rec"
                    class="Monext\HyvaPayline\Block\PaylineWebPaymentRec"
                    as="payline_web_payment_rec"
-                   template="Monext_HyvaPayline::component/payment/method/payline_web_payment_rec.phtml">
+                   template="Monext_HyvaPayline::checkout/payment/method/payline_web_payment_rec.phtml">
                 <arguments>
                     <argument name="magewire" xsi:type="object">
                         Monext\HyvaPayline\Magewire\PaylineWebPayment
@@ -25,7 +25,7 @@
             <block name="checkout.payment.method.payline_web_payment_nx"
                    class="Monext\HyvaPayline\Block\PaylineWebPaymentNx"
                    as="payline_web_payment_nx"
-                   template="Monext_HyvaPayline::component/payment/method/payline_web_payment_nx.phtml">
+                   template="Monext_HyvaPayline::checkout/payment/method/payline_web_payment_nx.phtml">
                 <arguments>
                     <argument name="magewire" xsi:type="object">
                         Monext\HyvaPayline\Magewire\PaylineWebPayment

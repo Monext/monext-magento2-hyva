@@ -31,9 +31,9 @@ class PaylineWebPaymentCpt extends PaylineWebPaymentAbstract
      */
     protected function _construct()
     {
-        $this->setData('template', 'Monext_HyvaPayline::component/payment/method/payline_web_payment_cpt_widget.phtml');
-        if($this->cptConfigProvider->getConfig()['payment']['paylineWebPaymentCpt']['integrationType'] === 'redirect') {
-            $this->setData('template', 'Monext_HyvaPayline::component/payment/method/payline_web_payment_cpt_redirect.phtml');
+        $this->setData('template', 'Monext_HyvaPayline::checkout/payment/method/payline_web_payment_cpt_widget.phtml');
+        if($this->cptConfigProvider->getConfig()['payment']['paylineWebPaymentCpt']['integrationType'] === PaylineApiConstants::INTEGRATION_TYPE_REDIRECT) {
+            $this->setData('template', 'Monext_HyvaPayline::checkout/payment/method/payline_web_payment_cpt_redirect.phtml');
         }
         parent::_construct();
     }

@@ -1,0 +1,66 @@
+<?php
+/** @var \Hyva\Theme\ViewModel\HyvaCsp $hyvaCsp */
+?>
+
+<script>
+    function paylineCptWidgetComponent() {
+        'use strict';
+        return {
+            init() {
+
+                //TODO: Remove
+                console.log('Init <?= __FILE__ ?>');
+
+                const token =  this.$root.dataset.token;
+                const context = {};
+
+                window.addEventListener('checkout:payment:method-activate', async event => {
+                    if (event.detail.method === "payline_web_payment_cpt") {
+                        hyvaCheckout.payment.activate('payline_web_payment_cpt', {
+                            initialize() {
+                                this.loadHostedLib().then(() => {
+                                    if (!this.checkLoaded()) {
+                                        WidgetApi.showWidget(context, token);
+                                    }
+                                }).catch(() => {
+                                    // TODO : traiter erreur si loadHostedLib échoue
+                                    alert("Error while loading payment widget");
+                                });
+                            },
+                            loadHostedLib() {
+                                return new Promise((resolve, reject) => {
+                                    //--> Check if script is already in head
+                                    const widgetScriptHead = document.getElementById("widget-api-vanilla");
+                                    if (widgetScriptHead) {
+                                        resolve();
+                                    } else {
+                                        const script = document.createElement('script');
+                                        script.src = '<?= $this->getViewFileUrl('Monext_Payline/js/widget-api-vanilla.js')?>';
+                                        script.setAttribute('id', 'widget-api-vanilla');
+                                        script.type = 'text/javascript';
+                                        script.onload = () => {
+                                            resolve();
+                                        }
+                                        script.onerror = () => {
+                                            reject();
+                                        }
+                                        document.head.append(script);
+                                    }
+                                });
+                            },
+                            checkLoaded: function () {
+                                return document.body.contains(document.getElementById('PaylineWidget'));
+                            },
+                        });
+                    }
+                });
+            }
+        };
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('paylineCptWidgetComponent', paylineCptWidgetComponent);
+    }, { once: true });
+
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>

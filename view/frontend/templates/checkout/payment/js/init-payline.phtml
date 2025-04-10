@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var HyvaCsp $hyvaCsp */
+
+/**
+ * @Internal Prefer utilizing the "after" container for injecting additional code.
+ */
+?>
+<script>
+    'use strict';
+
+    <?php /* @api */ ?>
+    hyvaCheckout.evaluation.registerProcessor(
+        'payline',
+        (component, el, result) => {
+            el.dataset.token = '';
+            if(result.arguments.details.token) {
+                el.dataset.token = result.arguments.details.token;
+            }
+            return result.result;
+        }
+    )
+</script>

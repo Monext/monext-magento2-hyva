@@ -1,66 +1,122 @@
 <?php
-/** @var \Hyva\Theme\ViewModel\HyvaCsp $hyvaCsp */
+/**
+ * @var \Monext\HyvaPayline\Block\Js\PaylineWebPaymentCpt $block
+ * @var \Magento\Framework\Escaper $escaper
+ *
+ * WARNING: Only one script tag in this file, nonce is generated on the fly by \Monext\HyvaPayline\Block\Js\PaylineWebPaymentCpt::_toHtml
+ */
+
 ?>
-
 <script>
-    function paylineCptWidgetComponent() {
-        'use strict';
-        return {
-            init() {
-
-                //TODO: Remove
-                console.log('Init <?= __FILE__ ?>');
-
-                const token =  this.$root.dataset.token;
-                const context = {};
-
-                window.addEventListener('checkout:payment:method-activate', async event => {
-                    if (event.detail.method === "payline_web_payment_cpt") {
-                        hyvaCheckout.payment.activate('payline_web_payment_cpt', {
-                            initialize() {
-                                this.loadHostedLib().then(() => {
-                                    if (!this.checkLoaded()) {
-                                        WidgetApi.showWidget(context, token);
-                                    }
-                                }).catch(() => {
-                                    // TODO : traiter erreur si loadHostedLib échoue
-                                    alert("Error while loading payment widget");
-                                });
-                            },
-                            loadHostedLib() {
-                                return new Promise((resolve, reject) => {
-                                    //--> Check if script is already in head
-                                    const widgetScriptHead = document.getElementById("widget-api-vanilla");
-                                    if (widgetScriptHead) {
-                                        resolve();
-                                    } else {
-                                        const script = document.createElement('script');
-                                        script.src = '<?= $this->getViewFileUrl('Monext_Payline/js/widget-api-vanilla.js')?>';
-                                        script.setAttribute('id', 'widget-api-vanilla');
-                                        script.type = 'text/javascript';
-                                        script.onload = () => {
-                                            resolve();
-                                        }
-                                        script.onerror = () => {
-                                            reject();
-                                        }
-                                        document.head.append(script);
-                                    }
-                                });
-                            },
-                            checkLoaded: function () {
-                                return document.body.contains(document.getElementById('PaylineWidget'));
-                            },
-                        });
-                    }
-                });
-            }
-        };
+    //--> Place order button
+    let hasPlaceOrderButtonHandler = false;
+    const placeHolerButtonSelector = 'button[x-bind^="buttonPlaceOrder"]';
+    const togglePlaceOrderButton = (visibility) => {
+        const placeOrderButton = document.querySelector(placeHolerButtonSelector);
+        if (placeOrderButton) {
+            placeOrderButton.style.visibility = visibility;
+        }
     }
 
-    window.addEventListener('alpine:init', () => {
-        Alpine.data('paylineCptWidgetComponent', paylineCptWidgetComponent);
-    }, { once: true });
+    //--> Agreements
+    const widgetPaymentButtonsSelector = '.pl-pay-btn';
+    async function onClickPaylineButtonHandler(event) {
+        const isValid = await hyvaCheckout.validation.validate();
+        if (!isValid) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return false;
+        }
+    }
+
+    window.eventDidshowstate= function (e) {
+        // use Hyva checkout validation before processing payment
+        Array.from(document.querySelectorAll(widgetPaymentButtonsSelector)).forEach(button => {
+            button.addEventListener('click', onClickPaylineButtonHandler, true);
+        });
+    };
+
+    const initPaylineWidget = () => {
+        let token =  '';
+        const widgetContainer = document.querySelector('[data-js-selector="paylineWidgetContainer"]');
+        if ( widgetContainer ) {
+            token = widgetContainer.dataset.token;
+        }
+
+        if ( !token ) {
+            return;
+        }
+
+        const context = <?= $block->getWidgetContext() ?>;
+        context['containerId']= 'payline-widget-container';
+
+        hyvaCheckout.payment.activate('payline_web_payment_cpt', {
+            initialize() {
+                this.loadHostedLib().then(() => {
+                    if (!this.checkLoaded()) {
+                        WidgetApi.showWidget(context, token);
+                    }
+                }).catch((error) => {
+                    // TODO : traiter erreur si loadHostedLib échoue
+                    console.error(error);
+                });
+            },
+            loadHostedLib() {
+                return new Promise((resolve, reject) => {
+                    //--> Check if script is already in head
+                    const widgetScriptHead = document.getElementById("widget-api-vanilla");
+                    if (widgetScriptHead) {
+                        resolve();
+                    } else {
+                        const script = document.createElement('script');
+                        script.src = '<?= $block->getViewFileUrl('Monext_Payline/js/widget-api-vanilla.js') ?>';
+                        script.setAttribute('id', 'widget-api-vanilla');
+                        script.type = 'text/javascript';
+                        script.onload = () => {
+                            resolve();
+                        }
+                        script.onerror = () => {
+                            reject(new Error('Failed to load script : ' + script.src));
+                        }
+                        document.head.append(script);
+                    }
+                });
+            },
+            checkLoaded: function () {
+                return document.body.contains(document.getElementById('PaylineWidget'));
+            },
+        });
+    };
+
+    const initPaylineWidgetHandler = (e) => {
+        //--> From checkout step load
+        let displayWidget = false;
+
+        if (e.type === "checkout:step:loaded") {
+            if ( e.detail?.route === "payment" ) {
+                const selectedPaymentMethod = Array.from(document.querySelectorAll('input[name="payment-method-option"]')).filter(elt => elt.checked)[0];
+                if ( selectedPaymentMethod && selectedPaymentMethod.value === 'payline_web_payment_cpt' ) {
+                    displayWidget = true;
+                }
+            }
+        }
+
+        //--> From payment method activation
+        else if (e.type === "checkout:payment:method-activate") {
+            if (e.detail?.method === "payline_web_payment_cpt") {
+                displayWidget = true;
+            }
+        }
+
+        if ( displayWidget ) {
+            initPaylineWidget();
+            togglePlaceOrderButton('hidden');
+        } else {
+            togglePlaceOrderButton('visible');
+        }
+    }
+
+    window.addEventListener('checkout:payment:method-activate', initPaylineWidgetHandler);
+    window.addEventListener('checkout:step:loaded', initPaylineWidgetHandler);
 
 </script>
-<?php $hyvaCsp->registerInlineScript() ?>

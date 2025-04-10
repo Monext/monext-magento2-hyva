@@ -9,8 +9,9 @@ use Monext\Payline\PaylineApi\Constants as PaylineApiConstants;
 
 class PaylineWebPaymentCpt extends PaylineWebPaymentAbstract
 {
-    private GeneralConfigProvider $generalConfigProvider;
-    private CptConfigProvider $cptConfigProvider;
+    protected GeneralConfigProvider $generalConfigProvider;
+
+    protected CptConfigProvider $cptConfigProvider;
 
     public function __construct(
         Template\Context $context,

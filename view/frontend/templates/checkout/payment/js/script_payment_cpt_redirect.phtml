@@ -1,21 +1,18 @@
 <?php
-/** @var \Hyva\Theme\ViewModel\HyvaCsp $hyvaCsp */
+/**
+ * @var $block \Monext\HyvaPayline\Block\Js\PaylineWebPaymentCpt
+ *
+ * WARNING: Only one script tag in this file, nonce is generated on the fly by \Monext\HyvaPayline\Block\Js\PaylineWebPaymentCpt::_toHtml
+ */
+
 ?>
 <script>
     function paylineCptRedirectComponent() {
         'use strict';
         return {
             init() {
-
-                // (function () {
-                //TODO: Remove
-                console.log('Init <?= __FILE__ ?>');
-
-
-
                 let contractsRedirect = document.getElementById('payline-contracts-redirect');
                 contractsRedirect.addEventListener('change', async function () {
-                    console.log('payline-contracts-redirect', 'change');
                     let selected = document.querySelector('input[name="payment[payline_payments_standard][contract_id]"]:checked');
                     if (selected !== null) {
                         await Magewire.find('checkout.payment.method.payline_web_payment_cpt').call('setAdditionalData', selected.value);
@@ -29,4 +26,3 @@
         Alpine.data('paylineCptRedirectComponent', paylineCptRedirectComponent);
     }, { once: true });
 </script>
-<?php $hyvaCsp->registerInlineScript() ?>

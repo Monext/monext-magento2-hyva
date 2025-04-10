@@ -3,9 +3,11 @@
 
 namespace Monext\HyvaPayline\Model\Magewire\Payment;
 
+use Exception;
 use Hyva\Checkout\Model\Magewire\Component\EvaluationResultFactory;
 use Hyva\Checkout\Model\Magewire\Component\EvaluationResultInterface;
 use Hyva\Checkout\Model\Magewire\Payment\AbstractPlaceOrderService;
+use Magento\Checkout\Model\Session as SessionCheckout;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Quote\Api\CartManagementInterface;
@@ -28,6 +30,8 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
      */
     protected $order = null;
 
+    protected $sessionCheckout;
+
     /**
      * @param CartManagementInterface $cartManagement
      * @param OrderRepositoryInterface $orderRepository
@@ -35,9 +39,11 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
     public function __construct(
         CartManagementInterface  $cartManagement,
         OrderRepositoryInterface $orderRepository,
+        SessionCheckout $sessionCheckout,
     ) {
         parent::__construct($cartManagement);
         $this->orderRepository = $orderRepository;
+        $this->sessionCheckout = $sessionCheckout;
     }
 
     /**
@@ -71,6 +77,8 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
     }
 
     /**
+     * Redirection
+     *
      * @param Quote $quote
      * @return int
      * @throws CouldNotSaveException
@@ -81,6 +89,29 @@ class PlaceOrderServiceProvider extends AbstractPlaceOrderService
     }
 
     /**
+     * Redirection
+     *
+     * @return bool
+     */
+    public function canPlaceOrder(): bool
+    {
+        if (!$this->sessionCheckout->getQuoteId()) {
+            throw new Exception('Cannot find quote_id to place Payline order');
+        }
+        /** @var   \Magento\Quote\Api\Data\PaymentInterface $payment */
+        $payment = $this->sessionCheckout->getQuote()->getPayment();
+        if(strpos($payment->getMethod(), 'payline_web_payment_') === false ||
+            ! $payment->getAdditionalInformation('contract_number')
+        ) {
+            throw new Exception('Payment method or contract_number is are not valid to place Payline order');
+        }
+
+        return parent::canPlaceOrder();
+    }
+
+    /**
+     * Redirection
+     *
      * @param EvaluationResultFactory $resultFactory
      * @param int|null $orderId
      * @return EvaluationResultInterface

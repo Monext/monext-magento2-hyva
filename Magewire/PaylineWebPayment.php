@@ -9,10 +9,14 @@ use Magento\Checkout\Model\Session as SessionCheckout;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Psr\Log\LoggerInterface;
 use Magewirephp\Magewire\Component;
 use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
+use Monext\Payline\Helper\Constants as HelperConstants;
 use Monext\Payline\Helper\Data as DataHelper;
 use Monext\Payline\Model\PaymentManagement;
+
+
 
 class PaylineWebPayment extends Component implements EvaluationInterface
 {
@@ -24,6 +28,7 @@ class PaylineWebPayment extends Component implements EvaluationInterface
     private DataHelper $dataHelper;
     private PaymentManagement $paymentManagement;
     private HyvaHelper $hyvaHelper;
+    private LoggerInterface $logger;
 
     /**
      * @param CartRepositoryInterface $quoteRepository
@@ -35,15 +40,18 @@ class PaylineWebPayment extends Component implements EvaluationInterface
     public function __construct(
         CartRepositoryInterface $quoteRepository,
         SessionCheckout $sessionCheckout,
+        LoggerInterface $logger,
         DataHelper $dataHelper,
         PaymentManagement $paymentManagement,
         HyvaHelper $hyvaHelper,
+
     ) {
         $this->quoteRepository = $quoteRepository;
         $this->sessionCheckout = $sessionCheckout;
         $this->dataHelper = $dataHelper;
         $this->paymentManagement = $paymentManagement;
         $this->hyvaHelper = $hyvaHelper;
+        $this->logger = $logger;
     }
 
     /**
@@ -83,33 +91,51 @@ class PaylineWebPayment extends Component implements EvaluationInterface
      */
     public function evaluateCompletion(EvaluationResultFactory $resultFactory): EvaluationResultInterface
     {
-        $paymentMethod = $this->sessionCheckout->getQuote()->getPayment()->getMethod();
+
+        $quote = $this->sessionCheckout->getQuote();
+        $payment = $quote->getPayment();
+
+        $paymentMethod = $payment->getMethod();
         if (!in_array($paymentMethod, $this->hyvaHelper->getHandledPaymentMethods())) {
             return $resultFactory->createSuccess();
         }
 
         if (empty($this->method)) {
-            return $resultFactory->createBlocking(__('Payment method not selected'));
+            return $resultFactory->createErrorMessageEvent()
+                ->withCustomEvent('payment:method:error')
+                ->withMessage('The payment method is missing from Payline. Select the payment method and try again.');
         }
 
-        $quote = $this->sessionCheckout->getQuote();
-        $quote->getPayment()->setAdditionalInformation('payment_mode', $this->method);
+        //Basci test for one page
+        if (!$quote->getShippingAddress() or !$quote->getShippingAddress()->getEmail()) {
+            return $resultFactory->createErrorMessageEvent()
+                ->withCustomEvent('payment:method:error')
+                ->withMessage('Invalid user data');
+        }
+
+        $payment->setAdditionalInformation('payment_mode', $this->method);
+
         $this->quoteRepository->save($quote);
+
+        try {
+            if($paymentMethod === HelperConstants::WEB_PAYMENT_CPT && $token = $this->getToken()) {
+                return $resultFactory->createCustom('payline')
+                    ->withDetails(['token'=>$token]);
+            }
+        } catch (\Exception $exception) {
+            return $resultFactory->createErrorMessage(__('No token retried'));
+        }
+
 
         return $resultFactory->createSuccess();
     }
 
-    public function getToken()
+    protected function getToken()
     {
         $quote = $this->sessionCheckout->getQuote();
-        if($this->method && $quote->getPayment()->getAdditionalInformation('payment_mode') == $this->method) {
-            try {
-                $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
-                return $result['token'];
-            } catch (\Exception $e) {
-
-            }
-
+        if($this->method && $quote->getPayment()->getAdditionalInformation('payment_mode') == $this->method ) {
+            $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
+            return $result['token'];
         }
         return '';
 

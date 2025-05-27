@@ -13,3 +13,8 @@
         @apply align-top;
     }
 }
+
+/* Hide if contain ticket */
+.pl-container-view:has(#pl-ticket-default-ticket_btn) {
+    display: none !important;
+}

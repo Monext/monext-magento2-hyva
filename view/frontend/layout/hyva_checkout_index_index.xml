@@ -1,13 +1,9 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="hyva.checkout.init-payment.after">
-            <block class="Monext\HyvaPayline\Block\Js\PaylineWebPaymentBase"
-                   name="checkout.payment.js.init-payline"
-                   template="Monext_HyvaPayline::checkout/payment/js/init-payline.phtml"/>
 
             <block class="Monext\HyvaPayline\Block\Js\PaylineWebPaymentCpt"
-                   name="checkout.payment.js.payline_web_payment_cpt"
-                   after="checkout.payment.js.init-payline"/>
+                   name="checkout.payment.js.payline_web_payment_cpt"/>
 
         </referenceContainer>
     </body>

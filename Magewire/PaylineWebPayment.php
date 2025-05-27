@@ -12,16 +12,15 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Magewirephp\Magewire\Component;
 use Monext\HyvaPayline\Helper\Hyva as HyvaHelper;
-use Monext\Payline\Helper\Constants as HelperConstants;
 use Monext\Payline\Helper\Data as DataHelper;
 use Monext\Payline\Model\PaymentManagement;
-
 
 
 class PaylineWebPayment extends Component implements EvaluationInterface
 {
     public string $method = '';
     public array $methods = [];
+    public ?string $token = null;
 
     private CartRepositoryInterface $quoteRepository;
     private SessionCheckout $sessionCheckout;
@@ -33,6 +32,7 @@ class PaylineWebPayment extends Component implements EvaluationInterface
     /**
      * @param CartRepositoryInterface $quoteRepository
      * @param SessionCheckout $sessionCheckout
+     * @param LoggerInterface $logger
      * @param DataHelper $dataHelper
      * @param PaymentManagement $paymentManagement
      * @param HyvaHelper $hyvaHelper
@@ -44,7 +44,6 @@ class PaylineWebPayment extends Component implements EvaluationInterface
         DataHelper $dataHelper,
         PaymentManagement $paymentManagement,
         HyvaHelper $hyvaHelper,
-
     ) {
         $this->quoteRepository = $quoteRepository;
         $this->sessionCheckout = $sessionCheckout;
@@ -91,7 +90,6 @@ class PaylineWebPayment extends Component implements EvaluationInterface
      */
     public function evaluateCompletion(EvaluationResultFactory $resultFactory): EvaluationResultInterface
     {
-
         $quote = $this->sessionCheckout->getQuote();
         $payment = $quote->getPayment();
 
@@ -106,8 +104,8 @@ class PaylineWebPayment extends Component implements EvaluationInterface
                 ->withMessage('The payment method is missing from Payline. Select the payment method and try again.');
         }
 
-        //Basci test for one page
-        if (!$quote->getShippingAddress() or !$quote->getShippingAddress()->getEmail()) {
+        //Basic test for one page
+        if (!$quote->getShippingAddress() || !$quote->getShippingAddress()->getEmail()) {
             return $resultFactory->createErrorMessageEvent()
                 ->withCustomEvent('payment:method:error')
                 ->withMessage('Invalid user data');
@@ -117,27 +115,34 @@ class PaylineWebPayment extends Component implements EvaluationInterface
 
         $this->quoteRepository->save($quote);
 
-        try {
-            if($paymentMethod === HelperConstants::WEB_PAYMENT_CPT && $token = $this->getToken()) {
-                return $resultFactory->createCustom('payline')
-                    ->withDetails(['token'=>$token]);
-            }
-        } catch (\Exception $exception) {
-            return $resultFactory->createErrorMessage(__('No token retried'));
-        }
-
-
         return $resultFactory->createSuccess();
     }
 
-    protected function getToken()
+    /**
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function generateToken(): void
     {
-        $quote = $this->sessionCheckout->getQuote();
-        if($this->method && $quote->getPayment()->getAdditionalInformation('payment_mode') == $this->method ) {
-            $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
-            return $result['token'];
-        }
-        return '';
+        $this->mount();
+        $this->getToken();
+    }
 
+    /**
+     * @return void
+     */
+    protected function getToken(): void
+    {
+        try {
+            $quote = $this->sessionCheckout->getQuote();
+            if($this->method && $quote->getPayment()->getAdditionalInformation('payment_mode') == $this->method) {
+                $result = $this->paymentManagement->saveCheckoutPaymentInformationFacade($quote->getId(), $quote->getPayment());
+                $this->token = $result['token'];
+            }
+        } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
+            $this->token = null;
+        }
     }
 }

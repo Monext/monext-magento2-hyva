@@ -8,10 +8,19 @@
 
 ?>
 <script>
+    const paylineCptMethodCode = 'payline_web_payment_cpt'
+    const paylineCptComponent = 'checkout.payment.method.payline_web_payment_cpt';
+    const paylineWidgetContext = <?= $block->getWidgetContext() ?>;
+    const paylineWidgetId = 'PaylineWidget';
+
+    let initTokenRequested = false;
+    let paylinePaymentSelected = 0;
+
+
     //--> Place order button
     let hasPlaceOrderButtonHandler = false;
     const placeHolerButtonSelector = 'button[x-bind^="buttonPlaceOrder"]';
-    const togglePlaceOrderButton = (visibility) => {
+    function togglePlaceOrderButton(visibility) {
         const placeOrderButton = document.querySelector(placeHolerButtonSelector);
         if (placeOrderButton) {
             placeOrderButton.style.visibility = visibility;
@@ -36,28 +45,90 @@
         });
     };
 
-    const initPaylineWidget = () => {
-        let token =  '';
-        const widgetContainer = document.querySelector('[data-js-selector="paylineWidgetContainer"]');
-        if ( widgetContainer ) {
-            token = widgetContainer.dataset.token;
+    window.eventFinalstatehasbeenreached = function (e) {
+        if ( e.state === "PAYMENT_SUCCESS" ) {
+            //--> Redirect to success page
+            //--> Ticket is hidden by CSS
+            //--> Wait for DOM update ti simulate a click on the ticket confirmation button
+            window.setTimeout(() => {
+                const ticketConfirmationButton = document.getElementById("pl-ticket-default-ticket_btn");
+                if ( ticketConfirmationButton ) {
+                    ticketConfirmationButton.click();
+                }
+            }, 0);
+        }
+    }
+
+    // Check if currently selected payment method is Payline CPT
+    function isPaylinePaymentMethodSelected () {
+        const paylinePaymentMethodCheckBox = document.querySelector('input[name="payment-method-option"][value="' + paylineCptMethodCode + '"]');
+        return paylinePaymentMethodCheckBox && paylinePaymentMethodCheckBox.checked;
+    }
+
+    // Check if Payline widget is loaded in the page
+    function isPaylineWidgetLoaded () {
+        return document.getElementById(paylineWidgetId) !== null;
+    }
+
+    // ----------------------------------------- //
+    // ------------ Loader management ---------- //
+    // ----------------------------------------- //
+
+    function showMageWireLoader () {
+        window.dispatchEvent(new CustomEvent('magewire:loader:start'));
+    }
+
+    function hideMageWireLoader () {
+        window.dispatchEvent(new CustomEvent('magewire:loader:done'));
+    }
+
+    // ----------------------------------------- //
+    // ------------ Token management ----------- //
+    // ----------------------------------------- //
+
+    // ------------ INITIALIZATION ------------- //
+
+    async function getTokenAndShowWidget(renew = false) {
+        let token = null;
+        if (!renew) {
+            initTokenRequested = true;
         }
 
-        if ( !token ) {
-            return;
+        try {
+            showMageWireLoader()
+            await Magewire.find(paylineCptComponent).call('generateToken')
+            token = Magewire.find(paylineCptComponent).get('token')
+        } catch (error) {
         }
 
-        const context = <?= $block->getWidgetContext() ?>;
-        context['containerId']= 'payline-widget-container';
+        if (token) {
+            if (!renew) {
+                mountWidgetWithToken(token)
+            } else {
+                resetWidgetWithToken(token)
+            }
+        } else  {
+            if(!error) {
+                let error = "Payline, unknown error"
+            }
+            console.error(error);
+        }
 
-        hyvaCheckout.payment.activate('payline_web_payment_cpt', {
+        hideMageWireLoader()
+        return ;
+    }
+
+    // INITIALIZATION : Done
+    function mountWidgetWithToken (token) {
+        paylineWidgetContext['containerId'] = 'payline-widget-container';
+        hyvaCheckout.payment.activate(paylineCptMethodCode, {
             initialize() {
                 this.loadHostedLib().then(() => {
-                    if (!this.checkLoaded()) {
-                        WidgetApi.showWidget(context, token);
+                    if (!isPaylineWidgetLoaded()) {
+                        WidgetApi.showWidget(paylineWidgetContext, token);
                     }
                 }).catch((error) => {
-                    // TODO : traiter erreur si loadHostedLib échoue
+                    // TODO : Manage error
                     console.error(error);
                 });
             },
@@ -81,42 +152,85 @@
                         document.head.append(script);
                     }
                 });
-            },
-            checkLoaded: function () {
-                return document.body.contains(document.getElementById('PaylineWidget'));
-            },
+            }
         });
-    };
+    }
 
-    const initPaylineWidgetHandler = (e) => {
-        //--> From checkout step load
-        let displayWidget = false;
 
-        if (e.type === "checkout:step:loaded") {
-            if ( e.detail?.route === "payment" ) {
-                const selectedPaymentMethod = Array.from(document.querySelectorAll('input[name="payment-method-option"]')).filter(elt => elt.checked)[0];
-                if ( selectedPaymentMethod && selectedPaymentMethod.value === 'payline_web_payment_cpt' ) {
-                    displayWidget = true;
-                }
-            }
-        }
-
-        //--> From payment method activation
-        else if (e.type === "checkout:payment:method-activate") {
-            if (e.detail?.method === "payline_web_payment_cpt") {
-                displayWidget = true;
-            }
-        }
-
-        if ( displayWidget ) {
-            initPaylineWidget();
-            togglePlaceOrderButton('hidden');
+    // UPDATE : Done
+    function resetWidgetWithToken(token) {
+        if(typeof(Payline) !== "undefined") {
+            Payline.Api.reset(token)
         } else {
-            togglePlaceOrderButton('visible');
+            console.error('Payline is undefined')
         }
     }
 
-    window.addEventListener('checkout:payment:method-activate', initPaylineWidgetHandler);
-    window.addEventListener('checkout:step:loaded', initPaylineWidgetHandler);
+    // ----------------------------------------- //
+    // ------------ Checkout events ------------ //
+    // ----------------------------------------- //
 
+    async function checkoutStepLoaded (e) {
+
+        if(e.detail?.route === "payment" || e.detail?.route === "onepage") {
+            if (isPaylinePaymentMethodSelected()) {
+                if(initTokenRequested === false) {
+                    await getTokenAndShowWidget()
+                }
+                togglePlaceOrderButton('hidden');
+            } else {
+                togglePlaceOrderButton('visible');
+            }
+        } else if (e.detail?.route !== "onepage") {
+            initTokenRequested = false;
+        }
+    }
+
+    async function paymentMethodSelected() {
+
+        //paylinePaymentSelected used to avoid SyncInput event
+        if (!paylinePaymentSelected && isPaylinePaymentMethodSelected()) {
+            paylinePaymentSelected++;
+            let renewToken = initTokenRequested === true && isPaylineWidgetLoaded()
+            await getTokenAndShowWidget(renewToken)
+            togglePlaceOrderButton('hidden');
+        } else {
+            togglePlaceOrderButton('visible');
+            paylinePaymentSelected=0;
+        }
+    }
+
+    /**
+     *
+     */
+    function updateTokenIfPaylineIsAvialable () {
+        if (isPaylinePaymentMethodSelected() && isPaylineWidgetLoaded() && initTokenRequested === true) {
+            getTokenAndShowWidget(true)
+        }
+    }
+
+    /**
+     * Follow event which can change grand total
+     */
+    function mageWireOnLoad () {
+        Magewire.on('coupon_code_applied', () => {
+            updateTokenIfPaylineIsAvialable()
+        });
+
+        Magewire.on('coupon_code_revoked', () => {
+            updateTokenIfPaylineIsAvialable()
+        });
+
+        Magewire.on('shipping_method_selected', () => {
+            updateTokenIfPaylineIsAvialable()
+        });
+
+        Magewire.on('payment_method_selected', () => {
+            paymentMethodSelected()
+        });
+    }
+
+
+    window.addEventListener('checkout:step:loaded', checkoutStepLoaded);
+    window.addEventListener('magewire:load', mageWireOnLoad);
 </script>

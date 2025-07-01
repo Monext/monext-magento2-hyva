@@ -39,6 +39,12 @@
     }
 
     window.eventDidshowstate= function (e) {
+        if(e.state === 'PAYMENT_METHODS_LIST') {
+            //Ensure compatibility with monext/magento2-module:1.2.22
+            if(Object.hasOwn(WidgetApi, 'customizeWidget')) {
+                WidgetApi.customizeWidget();
+            }
+        }
         // use Hyva checkout validation before processing payment
         Array.from(document.querySelectorAll(widgetPaymentButtonsSelector)).forEach(button => {
             button.addEventListener('click', onClickPaylineButtonHandler, true);

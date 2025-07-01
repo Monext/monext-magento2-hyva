@@ -35,6 +35,7 @@ class PaylineWebPaymentCpt extends PaylineWebPaymentBase
         $context = [
             "environment"      =>$environment,
             "widgetDisplay"       => $paylineCptConfig['widgetDisplay'],
+            "widgetCustomization" => !empty($paylineCptConfig['widgetCustomization']) ? $paylineCptConfig['widgetCustomization'] : false,
             //"dataEmbeddedredirectionallowed"=> $paylineCptConfig['dataEmbeddedredirectionallowed']
             "dataEmbeddedredirectionallowed"=> true
         ];

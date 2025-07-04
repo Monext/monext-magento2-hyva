@@ -96,6 +96,7 @@
 
     async function getTokenAndShowWidget(renew = false) {
         let token = null;
+        let error = "Payline, no token";
         if (!renew) {
             initTokenRequested = true;
         }
@@ -105,6 +106,8 @@
             await Magewire.find(paylineCptComponent).call('generateToken')
             token = Magewire.find(paylineCptComponent).get('token')
         } catch (error) {
+            console.log(error)
+
         }
 
         if (token) {
@@ -114,9 +117,6 @@
                 resetWidgetWithToken(token)
             }
         } else  {
-            if(!error) {
-                let error = "Payline, unknown error"
-            }
             console.error(error);
         }
 

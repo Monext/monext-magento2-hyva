@@ -40,6 +40,10 @@ class PaylineWebPaymentCpt extends PaylineWebPaymentBase
             "dataEmbeddedredirectionallowed"=> true
         ];
 
+        if($this->cspNonceProvider) {
+            $context['nonce'] = $this->cspNonceProvider->generateNonce();
+        }
+
         return json_encode($context);
     }
 

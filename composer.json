@@ -2,10 +2,10 @@
     "name": "monext/module-hyva-payline",
     "description": "Hyva compatibility module for Payline Magento 2",
     "type": "magento2-module",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "require": {
         "hyva-themes/magento2-hyva-checkout": ">=1.1",
-        "monext/magento2-module": ">=1.2.20"
+        "monext/magento2-module": ">=1.2.23"
     },
     "authors" : [
         {

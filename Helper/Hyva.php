@@ -8,6 +8,17 @@ use Monext\Payline\Helper\Constants as HelperConstants;
 
 class Hyva extends AbstractHelper
 {
+    const ADDRESS_MADATORY_FIELDS = [
+        'firstname',
+        'lastname',
+        'street',
+        'city',
+        'postcode',
+        'country_id',
+        'email',
+    ];
+
+
     /**
      * @return array
      */

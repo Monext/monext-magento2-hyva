@@ -26,4 +26,13 @@
             </argument>
         </arguments>
     </type>
+
+    <type name="\Hyva\Checkout\Model\ConfigData\HyvaThemes\Checkout">
+        <plugin name="monext-payline-hyva-checkout-eav-check" type="Monext\HyvaPayline\Plugin\CheckoutCheckEavAttributes"/>
+    </type>
+
+    <type name="\Monext\Payline\PaylineApi\Request\DoWebPayment">
+        <plugin name="monext-payline-hyva-checkout-one-page-billing" type="Monext\HyvaPayline\Plugin\PaylineApi\Request\DoWebPaymentPlugin"/>
+    </type>
+
 </config>

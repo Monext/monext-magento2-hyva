@@ -3,6 +3,7 @@
     <module name="Monext_HyvaPayline">
         <sequence>
             <module name="Monext_Payline"/>
+            <module name="Hyva_Checkout"/>
         </sequence>
     </module>
 </config>

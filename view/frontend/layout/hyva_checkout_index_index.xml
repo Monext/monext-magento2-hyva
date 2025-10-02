@@ -1,0 +1,11 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="content">
+            <block class="Monext\Payline\Block\Checkout\WidgetCustomCss" name="payline.widget.css"  ifconfig="payment/payline_web_payment_cpt/widget_custom_enabled"/>
+        </referenceContainer>
+        <referenceContainer name="hyva.checkout.init-payment.after">
+            <block class="Monext\HyvaPayline\Block\Js\PaylineWebPaymentCpt"
+                   name="checkout.payment.js.payline_web_payment_cpt"/>
+        </referenceContainer>
+    </body>
+</page>

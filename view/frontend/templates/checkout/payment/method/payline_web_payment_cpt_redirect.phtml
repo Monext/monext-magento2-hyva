@@ -1,0 +1,29 @@
+<?php
+/** @var \Monext\HyvaPayline\Block\PaylineWebPaymentCpt $block */
+/** @var \Magento\Framework\Escaper $escaper */
+
+?>
+<div class="payment-method payline-payment-block">
+    <div class="payment-method-content">
+        <div>
+            <span><?= __($block->getRedirectMessage()) ?></span>
+        </div>
+        <br/>
+        <ul id="payline-contracts-redirect"  x-data="paylineCptRedirectComponent"
+        >
+            <?php foreach ($block->getContracts() as $contract): ?>
+                <li class="flex items-center my-2 p-4 bg-gray-100 rounded-lg has-[:checked]:bg-gray-200">
+                    <input type="radio"
+                           name="payment[payline_payments_standard][contract_id]"
+                           class="radio"
+                           id="payline_payments_standard_contract_id_<?= $escaper->escapeHtmlAttr($contract['id']); ?>"
+                           value="<?= $contract['number'] ?>"/>
+                    <label for="payline_payments_standard_contract_id_<?= $escaper->escapeHtmlAttr($contract['id']); ?>" class="flex items-center justify-between px-4 w-full">
+                        <span><?= $escaper->escapeHtml($contract['label']); ?></span>
+                        <img src="<?= $escaper->escapeHtmlAttr($contract['logo']); ?>" alt="<?= $escaper->escapeHtmlAttr($contract['label']); ?>"/>
+                    </label>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</div>

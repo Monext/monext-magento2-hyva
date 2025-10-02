@@ -24,7 +24,7 @@ class PaymentMethod
      * @return bool
      * @throws LocalizedException
      */
-    public function afterIsAvailable(AbstractMethod $subject, bool $result, CartInterface $quote = null): bool
+    public function afterIsAvailable(AbstractMethod $subject, bool $result, ?CartInterface $quote = null): bool
     {
         if($this->helperHyva->isEnabled()) {
             if(!in_array($subject->getCode(), $this->helperHyva->getHandledPaymentMethods())) {

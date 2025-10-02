@@ -9,8 +9,9 @@ use Monext\Payline\PaylineApi\Constants as PaylineApiConstants;
 
 class PaylineWebPaymentCpt extends PaylineWebPaymentAbstract
 {
-    private GeneralConfigProvider $generalConfigProvider;
-    private CptConfigProvider $cptConfigProvider;
+    protected GeneralConfigProvider $generalConfigProvider;
+
+    protected CptConfigProvider $cptConfigProvider;
 
     public function __construct(
         Template\Context $context,
@@ -31,9 +32,9 @@ class PaylineWebPaymentCpt extends PaylineWebPaymentAbstract
      */
     protected function _construct()
     {
-        //$this->setData('template', 'Monext_HyvaPayline::component/payment/method/payline_web_payment_cpt_widget.phtml');
+        $this->setData('template', 'Monext_HyvaPayline::checkout/payment/method/payline_web_payment_cpt_widget.phtml');
         if($this->cptConfigProvider->getConfig()['payment']['paylineWebPaymentCpt']['integrationType'] === PaylineApiConstants::INTEGRATION_TYPE_REDIRECT) {
-            $this->setData('template', 'Monext_HyvaPayline::component/payment/method/payline_web_payment_cpt_redirect.phtml');
+            $this->setData('template', 'Monext_HyvaPayline::checkout/payment/method/payline_web_payment_cpt_redirect.phtml');
         }
         parent::_construct();
     }
